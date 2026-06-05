@@ -29,7 +29,6 @@ function App() {
       {/* NAVIGATION */}
       <nav className="navbar">
         <h1 className="logo">Silicon MockSpace</h1>
-        <button className="nav-button" onClick={() => setIsModalOpen(true)}>Book Session</button>
       </nav>
 
       {/* HERO SECTION */}
