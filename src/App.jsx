@@ -2,36 +2,121 @@ import React, { useState } from 'react';
 import './App.css';
 
 function App() {
-  // State to manage if the booking modal is open
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // State to handle form submission message
   const [submitted, setSubmitted] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', track: 'Physical Design' });
+  const [timeError, setTimeError] = useState('');
+  
+  // ADDED: phone property to state
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '',
+    education: '',
+    college: '',
+    track: 'Physical Design', 
+    preference: '',
+    datetime: '' 
+  });
+
+  const getMinDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const validateDateTime = (datetimeStr) => {
+    if (!datetimeStr) return ""; 
+
+    const selectedDate = new Date(datetimeStr);
+    const day = selectedDate.getDay(); 
+    const hour = selectedDate.getHours();
+    const minutes = selectedDate.getMinutes();
+    
+    const time = hour + (minutes / 60);
+
+    if (day === 0) {
+      if (time < 10 || time > 18) {
+        return "Sunday sessions are only available between 10:00 AM and 6:00 PM.";
+      }
+    } else {
+      if (time < 17 || time > 21) {
+        return "Monday-Saturday sessions are only available between 5:00 PM and 9:00 PM.";
+      }
+    }
+    return ""; 
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'datetime') {
+      const errorMessage = validateDateTime(value);
+      setTimeError(errorMessage);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you can connect an API later. For now, we simulate a successful booking.
-    setSubmitted(true);
-    setTimeout(() => {
-      setIsModalOpen(false);
-      setSubmitted(false);
-      setFormData({ name: '', email: '', track: 'Physical Design' });
-    }, 3000);
+    
+    const errorMessage = validateDateTime(formData.datetime);
+    if (errorMessage) {
+      setTimeError(errorMessage);
+      return; 
+    }
+
+    // Prepare data for email (Now includes Phone_Number)
+    const submissionData = {
+      // IMPORTANT: Replace the text below with your actual key from Web3Forms!
+      access_key: "YOUR_WEB3FORMS_ACCESS_KEY_HERE",
+      subject: `New Mock Interview Booking from ${formData.name}`,
+      from_name: "Silicon MockSpace Portal",
+      Name: formData.name,
+      Email: formData.email,
+      Phone_Number: formData.phone,
+      Education: formData.education,
+      College_or_Company: formData.college,
+      Track: formData.track,
+      Focus_Preferences: formData.preference || "None specified",
+      Requested_Time: formData.datetime
+    };
+
+    try {
+      // Send the email
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(submissionData)
+      });
+
+      // Show success message and clear form (Now resets phone too)
+      setSubmitted(true);
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSubmitted(false);
+        setFormData({ name: '', email: '', phone: '', education: '', college: '', track: 'Physical Design', preference: '', datetime: '' });
+        setTimeError(''); 
+      }, 4000);
+
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong while sending the request. Please try again.");
+    }
   };
 
   return (
     <div className="app-container">
-      {/* NAVIGATION */}
       <nav className="navbar">
         <h1 className="logo">Silicon MockSpace</h1>
       </nav>
 
-      {/* HERO SECTION */}
       <header className="hero">
         <div className="hero-content">
           <h2>Crack Your Next VLSI Interview with Industry Experts</h2>
@@ -40,7 +125,6 @@ function App() {
         </div>
       </header>
 
-      {/* TRACKS SECTION */}
       <section className="tracks-section">
         <h3>Choose Your Track</h3>
         <div className="tracks-grid">
@@ -69,7 +153,6 @@ function App() {
         </div>
       </section>
 
-      {/* PROCESS SECTION */}
       <section className="process-section">
         <h3>How It Works</h3>
         <div className="process-steps">
@@ -91,7 +174,6 @@ function App() {
         </div>
       </section>
 
-      {/* EXPERTISE SECTION */}
       <section className="expertise-section">
         <h3>Who is Interviewing You?</h3>
         <div className="expertise-box">
@@ -100,27 +182,25 @@ function App() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="footer">
         <h2>Ready to bridge your knowledge gap?</h2>
         <button className="cta-button" onClick={() => setIsModalOpen(true)}>Book Now</button>
         <p className="copyright">© 2026 Silicon MockSpace. All rights reserved.</p>
       </footer>
 
-      {/* POPUP MODAL */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="close-modal" onClick={() => setIsModalOpen(false)}>×</button>
+          <div className="modal-content" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <button className="close-modal" onClick={() => { setIsModalOpen(false); setTimeError(''); }}>×</button>
             {submitted ? (
               <div className="success-message">
                 <h4>Booking Request Received!</h4>
-                <p>Our panel members will reach out to your email within 24 hours to schedule your interview slot.</p>
+                <p>Our panel members will review your details and reach out to your email within 24 hours to confirm your interview slot.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="booking-form">
                 <h3>Schedule Your Panel Session</h3>
-                <p>Fill out your details to match with our 3-4 member interview panel.</p>
+                <p>Fill out your details to match with our interview panel.</p>
                 
                 <label>Full Name</label>
                 <input type="text" name="name" required value={formData.name} onChange={handleInputChange} placeholder="Enter your name" />
@@ -128,11 +208,48 @@ function App() {
                 <label>Email Address</label>
                 <input type="email" name="email" required value={formData.email} onChange={handleInputChange} placeholder="username@example.com" />
 
+                {/* ADDED: Phone Number */}
+                <label>Phone Number</label>
+                <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} placeholder="+91 XXXXX XXXXX" />
+
+                <label>Educational Qualification</label>
+                <input type="text" name="education" required value={formData.education} onChange={handleInputChange} placeholder="e.g., B.E., M.Tech" />
+
+                <label>College / Company Name</label>
+                <input type="text" name="college" required value={formData.college} onChange={handleInputChange} placeholder="Where do you study/work?" />
+
                 <label>Target Interview Track</label>
                 <select name="track" value={formData.track} onChange={handleInputChange}>
                   <option value="Physical Design">Physical Design (Floorplan, CTS, STA)</option>
                   <option value="RTL & Digital Design">RTL & Digital Design (Logic, CMOS, Verilog)</option>
                 </select>
+
+                <label>Any Preferences or Specific Focus?</label>
+                <textarea 
+                  name="preference" 
+                  value={formData.preference} 
+                  onChange={handleInputChange} 
+                  placeholder="e.g., Focus more on Setup/Hold violations..." 
+                  rows="2" 
+                  style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                />
+
+                <label>Preferred Date & Time</label>
+                <input 
+                  type="datetime-local" 
+                  name="datetime" 
+                  required 
+                  value={formData.datetime} 
+                  onChange={handleInputChange}
+                  min={getMinDateTime()} 
+                  style={{ marginBottom: timeError ? '5px' : '20px' }}
+                />
+                
+                {timeError && (
+                  <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', marginBottom: '20px', marginTop: '0' }}>
+                    {timeError}
+                  </p>
+                )}
 
                 <button type="submit" className="submit-form-btn">Submit Booking Request</button>
               </form>
