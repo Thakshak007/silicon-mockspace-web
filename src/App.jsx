@@ -72,7 +72,7 @@ function App() {
     // Prepare data for email (Now includes Phone_Number)
     const submissionData = {
       // IMPORTANT: Replace the text below with your actual key from Web3Forms!
-      access_key: "YOUR_WEB3FORMS_ACCESS_KEY_HERE",
+      access_key: "0a1fa2e7-47cf-46f2-9934-a15ff15e06c4",
       subject: `New Mock Interview Booking from ${formData.name}`,
       from_name: "Silicon MockSpace Portal",
       Name: formData.name,
