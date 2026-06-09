@@ -6,7 +6,7 @@ function App() {
   const [submitted, setSubmitted] = useState(false);
   const [timeError, setTimeError] = useState('');
   
-  // ADDED: phone property to state
+  // ADDED: transactionId to state
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -15,7 +15,8 @@ function App() {
     college: '',
     track: 'Physical Design', 
     preference: '',
-    datetime: '' 
+    datetime: '',
+    transactionId: '' 
   });
 
   const getMinDateTime = () => {
@@ -69,10 +70,10 @@ function App() {
       return; 
     }
 
-    // Prepare data for email (Now includes Phone_Number)
+    // Prepare data for email (Now includes Transaction_ID)
     const submissionData = {
       // IMPORTANT: Replace the text below with your actual key from Web3Forms!
-      access_key: "0a1fa2e7-47cf-46f2-9934-a15ff15e06c4",
+      access_key: "YOUR_WEB3FORMS_ACCESS_KEY_HERE",
       subject: `New Mock Interview Booking from ${formData.name}`,
       from_name: "Silicon MockSpace Portal",
       Name: formData.name,
@@ -82,11 +83,11 @@ function App() {
       College_or_Company: formData.college,
       Track: formData.track,
       Focus_Preferences: formData.preference || "None specified",
-      Requested_Time: formData.datetime
+      Requested_Time: formData.datetime,
+      UPI_Transaction_ID: formData.transactionId
     };
 
     try {
-      // Send the email
       await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
@@ -96,12 +97,12 @@ function App() {
         body: JSON.stringify(submissionData)
       });
 
-      // Show success message and clear form (Now resets phone too)
+      // Show success message and clear form
       setSubmitted(true);
       setTimeout(() => {
         setIsModalOpen(false);
         setSubmitted(false);
-        setFormData({ name: '', email: '', phone: '', education: '', college: '', track: 'Physical Design', preference: '', datetime: '' });
+        setFormData({ name: '', email: '', phone: '', education: '', college: '', track: 'Physical Design', preference: '', datetime: '', transactionId: '' });
         setTimeError(''); 
       }, 4000);
 
@@ -195,7 +196,7 @@ function App() {
             {submitted ? (
               <div className="success-message">
                 <h4>Booking Request Received!</h4>
-                <p>Our panel members will review your details and reach out to your email within 24 hours to confirm your interview slot.</p>
+                <p>Our panel members will review your details, verify your payment, and reach out to your email within 24 hours to confirm your interview slot.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="booking-form">
@@ -208,7 +209,6 @@ function App() {
                 <label>Email Address</label>
                 <input type="email" name="email" required value={formData.email} onChange={handleInputChange} placeholder="username@example.com" />
 
-                {/* ADDED: Phone Number */}
                 <label>Phone Number</label>
                 <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} placeholder="+91 XXXXX XXXXX" />
 
@@ -250,6 +250,31 @@ function App() {
                     {timeError}
                   </p>
                 )}
+
+                {/* --- PAYMENT SCANNER SECTION --- */}
+                <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ marginTop: 0, marginBottom: '10px', color: '#1e293b' }}>💳 Step 1: Scan & Pay</h4>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '15px' }}>Scan the QR code using Google Pay, PhonePe, or Paytm to pay the mock interview fee.</p>
+                  
+                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    {/* Make sure qrcode.png or .jpg is inside your public folder */}
+                    <img src="/phonepe.png" alt="UPI QR Code" style={{ maxWidth: '200px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                  </div>
+
+                  <h4 style={{ marginTop: 0, marginBottom: '10px', color: '#1e293b' }}>📝 Step 2: Verify Payment</h4>
+                  <label>12-Digit UPI Transaction ID (UTR)</label>
+                  <input 
+                    type="text" 
+                    name="transactionId" 
+                    required 
+                    value={formData.transactionId} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter 12-digit UTR number" 
+                    maxLength="12"
+                    style={{ marginBottom: '0px' }}
+                  />
+                </div>
+                {/* --- END PAYMENT SECTION --- */}
 
                 <button type="submit" className="submit-form-btn">Submit Booking Request</button>
               </form>
